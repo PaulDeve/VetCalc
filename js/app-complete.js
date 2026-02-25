@@ -217,18 +217,18 @@
         const container = document.getElementById('vaccinesList');
         if (!container) return;
         
-        const parent = container.closest('.tab-content');
-        if (!parent) return;
+        const mainContainer = document.querySelector('.main-container');
+        if (!mainContainer) return;
         
-        parent.addEventListener('scroll', function() {
+        mainContainer.addEventListener('scroll', function() {
             if (isLoadingVaccines) return;
             
             const scrollTop = this.scrollTop;
             const scrollHeight = this.scrollHeight;
             const clientHeight = this.clientHeight;
             
-            // Si está a menos de 100px del final, cargar más
-            if (scrollHeight - scrollTop - clientHeight < 100) {
+            // Si está a menos de 200px del final, cargar más
+            if (scrollHeight - scrollTop - clientHeight < 200) {
                 const records = window.vaccines.getVaccineRecords();
                 const currentLoaded = vaccinesPage * ITEMS_PER_PAGE;
                 
@@ -240,7 +240,7 @@
                     }, 300);
                 }
             }
-        });
+        }, { passive: true });
     }
 
     window.removeVaccine = function(index) {
@@ -357,7 +357,7 @@
             });
             localStorage.setItem('vaccineRecords', JSON.stringify(records));
             alert('Vacuna registrada');
-            renderVaccinesList();
+            renderVaccinesList(true);
             this.reset();
             window.stats.updateStats();
         });

@@ -157,12 +157,14 @@ body.dark-mode .moon-icon {
 .main-container {
     position: relative;
     width: 100%;
-    height: calc(100vh - 64px - 80px);
+    height: auto;
+    min-height: calc(100vh - 64px - 80px);
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     background-color: var(--color-bg-light);
     display: block;
+    padding-bottom: 20px;
 }
 
 .main-container::-webkit-scrollbar {
@@ -183,7 +185,6 @@ body.dark-mode .moon-icon {
     display: none;
     opacity: 0;
     width: 100%;
-    min-height: 100%;
     animation: fadeOut 300ms ease-in-out forwards;
 }
 
@@ -538,26 +539,10 @@ body.dark-mode .result-card {
 .tab-content {
     display: none;
     animation: fadeIn 300ms ease-out;
-    max-height: calc(100vh - 250px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .tab-content.active {
     display: block;
-}
-
-.tab-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.tab-content::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.tab-content::-webkit-scrollbar-thumb {
-    background: var(--color-text-gray);
-    border-radius: 3px;
 }
 
 /* ==================== LISTA DE VACUNAS ==================== */
