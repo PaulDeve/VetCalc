@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2E7D32">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VetCalc">
+    <title>VetCalc - Asistente Veterinario</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232E7D32' width='192' height='192'/><text x='50%' y='50%' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>V</text></svg>">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-logo">
+                <span class="logo-icon">🐾</span>
+                <span class="logo-text">VetCalc</span>
+            </div>
+            <div class="navbar-toggle">
+                <button class="theme-toggle" id="themeToggle" title="Cambiar tema">
+                    <svg class="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenedor principal -->
+    <main class="main-container">
+    <!-- Indicador de carga -->
+        <div class="loader" id="loader">
+            <div class="loader-spinner"></div>
+        </div>
+
+        <script>
+            // Ocultar loader muy rápidamente si JavaScript funciona
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.classList.remove('active');
+                    loader.style.display = 'none';
+                }
+            }, 100);
+        </script>
+
+        <!-- 1. SECCIÓN CALCULADORA -->
+        <section class="section active" id="calculator-section">
+            <div class="section-content">
+                <h1 class="section-title">Calculadora de Posología</h1>
+                <p class="section-subtitle">Calcula la dosis exacta de medicamentos</p>
+
+                <form class="calculator-form" id="calculatorForm">
+                    <!-- Seleccionar especie -->
+                    <div class="form-group">
+                        <label for="species" class="form-label">
+                            <span class="label-icon">🦁</span>
+                            Especie
+                        </label>
+                        <select id="species" class="form-input" required>
+                            <option value="">Selecciona una especie</option>
+                            <option value="perro">Perro</option>
+                            <option value="gato">Gato</option>
+                            <option value="oveja">Oveja</option>
+                            <option value="conejo">Conejo</option>
+                            <option value="aves">Aves</option>
+                        </select>
+                    </div>
+
+                    <!-- Ingresar peso -->
+                    <div class="form-group">
+                        <label for="weight" class="form-label">
+                            <span class="label-icon">⚖️</span>
+                            Peso (kg)
+                        </label>
+                        <input type="number" id="weight" class="form-input" placeholder="Ingresa el peso" step="0.1" min="0" required>
+                    </div>
+
+                    <!-- Seleccionar medicamento -->
+                    <div class="form-group">
+                        <label for="drug" class="form-label">
+                            <span class="label-icon">💊</span>
+                            Medicamento
+                        </label>
+                        <select id="drug" class="form-input" required>
+                            <option value="">Selecciona un medicamento</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large">
+                        Calcular Dosis
+                    </button>
+                </form>
+
+                <!-- Resultado del cálculo -->
+                <div class="result-container" id="resultContainer" style="display: none;">
+                    <div class="result-card">
+                        <h2 class="result-title">Resultado del Cálculo</h2>
+                        
+                        <div class="result-item">
+                            <span class="result-label">Medicamento</span>
+                            <span class="result-value" id="resultDrug">-</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Dosis Total</span>
+                            <span class="result-value" id="resultDose">-</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Unidad</span>
+                            <span class="result-value" id="resultUnit">-</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Frecuencia</span>
+                            <span class="result-value" id="resultFrequency">-</span>
+                        </div>
+
+                        <div class="result-item">
+                            <span class="result-label">Vía de administración</span>
+                            <span class="result-value" id="resultRoute">-</span>
+                        </div>
+
+                        <div class="alert-box" id="warningsBox" style="display: none;"></div>
+
+                        <button type="button" class="btn btn-secondary" id="saveCalculation">
+                            Guardar cálculo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mensaje de error -->
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- 2. SECCIÓN VACUNAS -->
+        <section class="section" id="vaccines-section">
+            <div class="section-content">
+                <h1 class="section-title">Gestión de Vacunas</h1>
+                <p class="section-subtitle">Registra y controla las vacunas aplicadas</p>
+
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="register-vaccine">Registrar</button>
+                    <button class="tab-btn" data-tab="view-vaccines">Ver Registro</button>
+                </div>
+
+                <!-- Tab: Registrar vacuna -->
+                <div class="tab-content active" id="register-vaccine">
+                    <form class="vaccine-form" id="vaccineForm">
+                        <div class="form-group">
+                            <label for="vaccineSpecies" class="form-label">
+                                <span class="label-icon">🦁</span>
+                                Especie
+                            </label>
+                            <select id="vaccineSpecies" class="form-input" required>
+                                <option value="">Selecciona especie</option>
+                                <option value="perro">Perro</option>
+                                <option value="gato">Gato</option>
+                                <option value="oveja">Oveja</option>
+                                <option value="aves">Aves</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vaccineName" class="form-label">
+                                <span class="label-icon">💉</span>
+                                Vacuna
+                            </label>
+                            <select id="vaccineName" class="form-input" required>
+                                <option value="">Selecciona vacuna</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vaccineDate" class="form-label">
+                                <span class="label-icon">📅</span>
+                                Fecha de aplicación
+                            </label>
+                            <input type="date" id="vaccineDate" class="form-input" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-large">
+                            Registrar Vacuna
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Tab: Ver registro -->
+                <div class="tab-content" id="view-vaccines">
+                    <div class="vaccines-list" id="vaccinesList">
+                        <p class="empty-state">No hay vacunas registradas</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. SECCIÓN ESTADÍSTICAS -->
+        <section class="section" id="stats-section">
+            <div class="section-content">
+                <h1 class="section-title">Estadísticas</h1>
+                <p class="section-subtitle">Resumen de actividad y datos</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">💊</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Tratamientos</span>
+                            <span class="stat-value" id="totalTreatments">0</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">💉</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Vacunas</span>
+                            <span class="stat-value" id="totalVaccines">0</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-content">
+                            <span class="stat-label">Próximas</span>
+                            <span class="stat-value" id="upcomingVaccines">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">Medicamentos más utilizados</h3>
+                    <canvas id="drugsChart" class="chart-canvas"></canvas>
+                    <div class="chart-legend" id="chartLegend"></div>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-large" id="exportButton">
+                    Exportar datos
+                </button>
+
+                <button type="button" class="btn btn-danger btn-large" id="clearButton">
+                    Limpiar todo
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Menú de navegación inferior (Mobile) -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-section="calculator-section">
+            <span class="nav-icon">🧮</span>
+            <span class="nav-label">Calculadora</span>
+        </button>
+        <button class="nav-item" data-section="vaccines-section">
+            <span class="nav-icon">💉</span>
+            <span class="nav-label">Vacunas</span>
+        </button>
+        <button class="nav-item" data-section="stats-section">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Estadísticas</span>
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="js/drugs-core.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/vaccines.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        console.log('VetCalc cargada correctamente');
+        console.log('Calculadora:', window.calculator ? '✓' : '✗');
+        console.log('Vacunas:', window.vaccines ? '✓' : '✗');
+        console.log('Estadísticas:', window.stats ? '✓' : '✗');
+        console.log('App:', window.app ? '✓' : '✗');
+    </script>
+</body>
+</html>
