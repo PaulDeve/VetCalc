@@ -157,14 +157,13 @@ body.dark-mode .moon-icon {
 .main-container {
     position: relative;
     width: 100%;
-    height: auto;
-    min-height: calc(100vh - 64px - 80px);
+    height: calc(100vh - 144px);
+    max-height: calc(100vh - 144px);
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     background-color: var(--color-bg-light);
     display: block;
-    padding-bottom: 20px;
 }
 
 .main-container::-webkit-scrollbar {
