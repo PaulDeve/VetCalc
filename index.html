@@ -136,7 +136,10 @@
                             <span class="result-value" id="resultRoute">-</span>
                         </div>
 
-                        <div class="alert-box" id="warningsBox" style="display: none;"></div>
+                        <div class="alert-box" id="warningsBox" style="display: none;">
+                            <strong>⚠️ Advertencias:</strong>
+                            <p id="warningsText"></p>
+                        </div>
 
                         <button type="button" class="btn btn-secondary" id="saveCalculation">
                             Guardar cálculo
@@ -173,6 +176,7 @@
                                 <option value="perro">Perro</option>
                                 <option value="gato">Gato</option>
                                 <option value="oveja">Oveja</option>
+                                <option value="conejo">Conejo</option>
                                 <option value="aves">Aves</option>
                             </select>
                         </div>
@@ -244,7 +248,7 @@
 
                 <div class="chart-container">
                     <h3 class="chart-title">Medicamentos más utilizados</h3>
-                    <canvas id="drugsChart" class="chart-canvas"></canvas>
+                    <canvas id="drugsChart" class="chart-canvas" style="display: none;"></canvas>
                     <div class="chart-legend" id="chartLegend"></div>
                 </div>
 

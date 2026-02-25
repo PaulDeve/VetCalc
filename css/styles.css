@@ -538,10 +538,26 @@ body.dark-mode .result-card {
 .tab-content {
     display: none;
     animation: fadeIn 300ms ease-out;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .tab-content.active {
     display: block;
+}
+
+.tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background: var(--color-text-gray);
+    border-radius: 3px;
 }
 
 /* ==================== LISTA DE VACUNAS ==================== */

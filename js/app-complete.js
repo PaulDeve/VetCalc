@@ -52,7 +52,6 @@
         }
     };
 
-    // ============= ESTADÍSTICAS =============
     window.stats = {
         updateStats() {
             const calcs = window.calculator.getCalculationHistory();
@@ -60,6 +59,59 @@
             document.getElementById('totalTreatments').textContent = calcs.length;
             document.getElementById('totalVaccines').textContent = vaccs.length;
             document.getElementById('upcomingVaccines').textContent = vaccs.filter(v => v.upcoming).length;
+            
+            // Actualizar gráfico de medicamentos más utilizados
+            this.updateDrugsChart(calcs);
+        },
+        updateDrugsChart(calcs) {
+            const canvas = document.getElementById('drugsChart');
+            if (!canvas) return;
+            
+            // Contar medicamentos
+            const drugCount = {};
+            calcs.forEach(c => {
+                drugCount[c.drug] = (drugCount[c.drug] || 0) + 1;
+            });
+            
+            // Obtener top 5
+            const sorted = Object.entries(drugCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            if (sorted.length === 0) {
+                canvas.style.display = 'none';
+                document.getElementById('chartLegend').innerHTML = '<p style="padding: 10px;">Realiza cálculos para ver el gráfico</p>';
+                return;
+            }
+            
+            canvas.style.display = 'block';
+            
+            // Renderizar tabla simple si Chart.js no está disponible
+            const legend = document.getElementById('chartLegend');
+            legend.innerHTML = '<table style="width:100%; font-size:14px;"><tr style="border-bottom:1px solid #ddd;"><th style="text-align:left;padding:8px;">Medicamento</th><th style="text-align:right;padding:8px;">Usos</th></tr>' +
+                sorted.map(([drug, count]) => `<tr><td style="padding:8px;">${drug}</td><td style="text-align:right;padding:8px;"><strong>${count}</strong></td></tr>`).join('') +
+                '</table>';
+            
+            // Intentar dibujar si Chart.js está disponible
+            if (typeof Chart !== 'undefined') {
+                try {
+                    const ctx = canvas.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: sorted.map(s => s[0]),
+                            datasets: [{
+                                label: 'Usos',
+                                data: sorted.map(s => s[1]),
+                                backgroundColor: '#2E7D32'
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: true }
+                    });
+                } catch (e) {
+                    // Chart.js no está disponible, solo mostramos la tabla
+                }
+            }
         },
         getSummary() {
             return { totalTreatments: window.calculator.getCalculationHistory().length, totalVaccines: window.vaccines.getVaccineRecords().length, upcomingVaccines: 0 };
@@ -102,6 +154,119 @@
         return Object.entries(DRUGS).filter(([_, d]) => d.species[species]).map(([id, d]) => ({ id, name: d.name }));
     };
 
+    // ============= FUNCIONES AUXILIARES =============
+    let vaccinesPage = 0;
+    const ITEMS_PER_PAGE = 5;
+    let isLoadingVaccines = false;
+
+    function renderVaccinesList(reset = true) {
+        const records = window.vaccines.getVaccineRecords();
+        const container = document.getElementById('vaccinesList');
+        
+        if (records.length === 0) {
+            container.innerHTML = '<p class="empty-state">No hay vacunas registradas</p>';
+            return;
+        }
+        
+        if (reset) {
+            vaccinesPage = 0;
+            container.innerHTML = '';
+        }
+        
+        const start = vaccinesPage * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        const paginated = records.slice(start, end);
+        
+        const html = paginated.map((record, index) => `
+            <div class="vaccine-card">
+                <div class="vaccine-card-header">
+                    <div>
+                        <div class="vaccine-name">${record.vaccine}</div>
+                        <div class="vaccine-info">
+                            <strong>Especie:</strong> ${record.species}<br>
+                            <strong>Aplicada:</strong> ${new Date(record.date).toLocaleDateString('es-ES')}<br>
+                            <strong>Próxima:</strong> ${new Date(record.nextDate).toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    <div class="vaccine-actions">
+                        <button class="btn btn-small btn-delete" onclick="removeVaccine(${start + index})">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        if (reset) {
+            container.innerHTML = html;
+        } else {
+            container.innerHTML += html;
+        }
+        
+        // Agregar loader si hay más items
+        if (end < records.length) {
+            const loader = document.createElement('div');
+            loader.id = 'vaccines-loader';
+            loader.style.cssText = 'padding: 20px; text-align: center; color: #999; font-size: 14px;';
+            loader.innerHTML = '📱 Scrollea para cargar más...';
+            container.appendChild(loader);
+        }
+        
+        vaccinesPage++;
+    }
+
+    function setupVaccinesInfiniteScroll() {
+        const container = document.getElementById('vaccinesList');
+        if (!container) return;
+        
+        const parent = container.closest('.tab-content');
+        if (!parent) return;
+        
+        parent.addEventListener('scroll', function() {
+            if (isLoadingVaccines) return;
+            
+            const scrollTop = this.scrollTop;
+            const scrollHeight = this.scrollHeight;
+            const clientHeight = this.clientHeight;
+            
+            // Si está a menos de 100px del final, cargar más
+            if (scrollHeight - scrollTop - clientHeight < 100) {
+                const records = window.vaccines.getVaccineRecords();
+                const currentLoaded = vaccinesPage * ITEMS_PER_PAGE;
+                
+                if (currentLoaded < records.length) {
+                    isLoadingVaccines = true;
+                    setTimeout(() => {
+                        renderVaccinesList(false);
+                        isLoadingVaccines = false;
+                    }, 300);
+                }
+            }
+        });
+    }
+
+    window.removeVaccine = function(index) {
+        if (confirm('¿Eliminar esta vacuna?')) {
+            const records = window.vaccines.getVaccineRecords();
+            records.splice(index, 1);
+            localStorage.setItem('vaccineRecords', JSON.stringify(records));
+            renderVaccinesList(true);
+            window.stats.updateStats();
+        }
+    };
+
+    function updateVaccineSelector() {
+        const species = document.getElementById('vaccineSpecies').value;
+        const selector = document.getElementById('vaccineName');
+        
+        if (!species) {
+            selector.innerHTML = '<option value="">Selecciona vacuna</option>';
+            return;
+        }
+        
+        const vaccines = VACCINES[species] || [];
+        selector.innerHTML = '<option value="">Selecciona vacuna</option>' + 
+            vaccines.map(v => `<option value="${v}">${v}</option>`).join('');
+    }
+
     // ============= EVENTOS =============
     document.addEventListener('DOMContentLoaded', function() {
         // Calculadora
@@ -123,23 +288,54 @@
                 document.getElementById('resultUnit').textContent = result.unit;
                 document.getElementById('resultFrequency').textContent = result.frequency;
                 document.getElementById('resultRoute').textContent = result.route;
-                document.getElementById('warningsBox').innerHTML = result.warnings;
+                
+                // Mostrar advertencias si existen
+                if (result.warnings) {
+                    document.getElementById('warningsText').textContent = result.warnings;
+                    document.getElementById('warningsBox').style.display = 'block';
+                } else {
+                    document.getElementById('warningsBox').style.display = 'none';
+                }
+                
                 document.getElementById('resultContainer').style.display = 'block';
                 
                 const history = window.calculator.getCalculationHistory();
-                history.unshift({ drug: result.drug, weight, species });
+                history.unshift({ drug: result.drug, weight, species, drugId, timestamp: new Date().toISOString() });
                 if (history.length > 50) history.pop();
                 localStorage.setItem('calcHistory', JSON.stringify(history));
+                window.stats.updateStats();
             }
         });
 
-        // Actualizar medicamentos
+        // Guardar cálculo (nueva funcionalidad)
+        const saveBtn = document.getElementById('saveCalculation');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                const calcs = window.calculator.getCalculationHistory();
+                if (calcs.length === 0) {
+                    alert('No hay cálculos para guardar');
+                    return;
+                }
+                const lastCalc = calcs[0];
+                const summary = `${lastCalc.drug} - ${lastCalc.weight}kg (${lastCalc.species})`;
+                alert('Cálculo guardado: ' + summary);
+            });
+        }
+
+        // Actualizar medicamentos al cambiar especie
         document.getElementById('species').addEventListener('change', function() {
             const drugs = window.getDrugsBySpecies(this.value);
-            document.getElementById('drug').innerHTML = '<option>Selecciona</option>' + drugs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+            const drugSelect = document.getElementById('drug');
+            drugSelect.innerHTML = '<option value="">Selecciona un medicamento</option>' + 
+                drugs.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
         });
 
-        // Vacunas
+        // Vacunas - actualizar selector
+        document.getElementById('vaccineSpecies').addEventListener('change', function() {
+            updateVaccineSelector();
+        });
+
+        // Vacunas - registrar
         document.getElementById('vaccineForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const species = document.getElementById('vaccineSpecies').value;
@@ -152,10 +348,18 @@
             }
             
             const records = window.vaccines.getVaccineRecords();
-            records.unshift({ species, vaccine, date, nextDate: new Date(new Date(date).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], upcoming: false });
+            records.unshift({ 
+                species, 
+                vaccine, 
+                date, 
+                nextDate: new Date(new Date(date).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+                upcoming: false 
+            });
             localStorage.setItem('vaccineRecords', JSON.stringify(records));
             alert('Vacuna registrada');
+            renderVaccinesList();
             this.reset();
+            window.stats.updateStats();
         });
 
         // Tabs
@@ -165,6 +369,12 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 this.classList.add('active');
                 document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+                
+                // Renderizar lista de vacunas cuando se abre el tab
+                if (this.getAttribute('data-tab') === 'view-vaccines') {
+                    renderVaccinesList(true);
+                    setTimeout(() => setupVaccinesInfiniteScroll(), 100);
+                }
             });
         });
 
@@ -184,7 +394,7 @@
         document.getElementById('exportButton').addEventListener('click', () => window.stats.exportData());
         document.getElementById('clearButton').addEventListener('click', () => window.stats.clearAllData());
 
-        // Estadísticas
+        // Estadísticas iniciales
         window.stats.updateStats();
 
         // Aplicar tema guardado
